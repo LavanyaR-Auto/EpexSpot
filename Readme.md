@@ -1,4 +1,4 @@
-# EPEX Spot Market Data Scraper
+# EPEX Spot 
 
 An automated data extraction framework built with **Playwright** and **TypeScript** that scrapes market data from [epexspot.com](https://www.epexspot.com/en/market-results) and exports it to CSV.
 
@@ -16,52 +16,58 @@ An automated data extraction framework built with **Playwright** and **TypeScrip
 
 ```
 Project_BradyTech/
+├── Output/                     # CSV files saved here (auto-created, excluded from git)
 ├── Scripts/
 │   ├── Pages/
-│   │   ├── LoginPage.ts        # Handles navigation & CAPTCHA
-│   │   └── HomePage.ts         # Filter selection & data extraction
+│   │   ├── HomePage.ts         # Filter selection & data extraction
+│   │   └── LoginPage.ts        # Handles navigation & CAPTCHA
 │   ├── Tests/
 │   │   └── ScrapeData.spec.ts  # Test entry point
 │   └── Utils/
-│       ├── AuthManager.ts      # Session save/load (cookies)
-│       ├── DateUtils.ts        # Date formatting helpers
+│       ├── DateUtils.ts        # Date formatting helper
 │       └── Timeouts.ts         # Shared timeout constants
-├── test-results/               # CSV output saved here
-├── auth.json                   # Saved session cookies (auto-generated)
+├── test-results/               # Playwright test reports
+├── .gitignore
+├── auth.json                   # Saved session cookies (auto-generated, excluded from git)
+├── package.json
 ├── playwright.config.ts
-└── README.md
+└── Readme.md
 ```
 
 ---
 
 ## Setup
 
-### Prerequisites
+### 1. Initialise the project
 
-- Node.js (v18+)
-- npm
-
-### Install Dependencies
-
-# Initialise the project
+```
 npm init -y
+```
 
-# Initialise Playwright
+### 2. Initialise Playwright
+
+```
 npm init playwright@latest
+```
 
----
+### 3. Run the test
 
-## Running the Test
-npx playwright test --headed --project=chromium
+```
+npx playwright test
+```
 
-The `--headed` flag is required so you can manually solve the CAPTCHA when it appears.
+### 4. View last test report
+
+```
+npx playwright show-report
+```
 
 ---
 
 ## How It Works
 
 ### 1. Session Management
-On startup, the test checks if `auth.json` exists and loads the saved session automatically:
+On startup, the test automatically loads a saved session if `auth.json` exists:
 
 ```typescript
 test.use({
@@ -70,31 +76,32 @@ test.use({
 ```
 
 ### 2. CAPTCHA Handling
-The `LoginPage` navigates to the market data URL and checks if the filters page is already loaded:
-- **Session valid** → logs `✓ Session loaded, no CAPTCHA` and continues
-- **Session expired/missing** → detects the CAPTCHA, clicks the Begin button, logs a warning, gives you **30 seconds** to solve it manually, then saves the session to `auth.json`
+`LoginPage` navigates to the market data URL and checks if the filters page is already visible:
+
+- **Session valid** → logs `✓ Session loaded, no CAPTCHA` and continues immediately
+- **Session expired/missing** → detects the CAPTCHA, clicks the Begin button, gives you **30 seconds** to solve it manually, then saves the session to `auth.json` for future runs
 
 ### 3. Filter Selection
-Filters are configured via `HomePage` methods:
+Filters are configured in `ScrapeData.spec.ts` via `HomePage` methods:
 
 ```typescript
 await homePage.SelectTradingModality("Continuous");
-await homePage.SelectDeliveryDate(0);       // 0 = today, 1 = tomorrow, etc.
+await homePage.SelectDeliveryDate(0);   // 0 = today, 1 = tomorrow, -1 = yesterday
 await homePage.SelectProduct("30min");
 await homePage.SelectView("Table");
 await homePage.SelectMarketArea("GB");
 ```
 
-**Trading Modality options:** `Auction` | `Continuous` | `Capacity Auction` | `Guarantees of Origin`
+**Trading Modality:** `Auction` | `Continuous` | `Capacity Auction` | `Guarantees of Origin`
 
-**Product options:** `60min` | `30min` | `15min`
+**Product:** `60min` | `30min` | `15min`
 
-**View options:** `Map` | `Table` | `Graph`
+**View:** `Map` | `Table` | `Graph`
 
-**Delivery Date:** Pass a number — `0` for today, `1` for tomorrow, `-1` for yesterday
+**Delivery Date:** number offset from today — `0` = today, `1` = tomorrow, `-1` = yesterday
 
 ### 4. Data Extraction
-After filters are applied, the following columns are extracted:
+After filters are applied, all collapsible hour rows are expanded and the following columns are extracted:
 
 | Column | Description |
 |--------|-------------|
@@ -105,12 +112,38 @@ After filters are applied, the following columns are extracted:
 | Weight Avg. | Volume-weighted average price (€/MWh) |
 
 ### 5. CSV Export
-Data is saved to:
+Data is saved to the `Output` folder with a timestamped filename:
+
 ```
-test-results/market-data-YYYY-MM-DD_HH-MM-SS.csv
+Output/market-data-YYYY-MM-DD_HH-MM-SS.csv
 ```
 
-Each run creates a new timestamped file so historical data is preserved.
+The `Output` folder is created automatically if it does not exist. Each run produces a new file so no data is ever overwritten.
+
+---
+
+## Configuration
+
+`playwright.config.ts` is configured to:
+- Run in **headed mode** by default (`headless: false`) so CAPTCHA can be solved manually
+- Run on **Chromium only** — Firefox and WebKit are commented out but can be enabled
+- Capture traces on first retry for debugging
+
+---
+
+## Utilities
+
+**DateUtils.ts** — formats dates for the delivery date filter:
+```typescript
+GetFormattedDate(daysToAdd: number) // returns e.g. "20 Apr. 2026"
+```
+
+**Timeouts.ts** — shared timeout constants used across the project:
+```
+shortwait  = 4000ms
+mediumwait = 10000ms
+longwait   = 20000ms
+```
 
 ---
 
@@ -123,7 +156,7 @@ test("Market Data Extraction", async ({ page, context }) => {
 
     await loginPage.NavigateToMarketData(`${BASE_URL}`);
     await homePage.SelectTradingModality("Continuous");
-    await homePage.SelectDeliveryDate(0);   // today
+    await homePage.SelectDeliveryDate(0);
     await homePage.SelectProduct("30min");
     await homePage.SelectView("Table");
     await homePage.SelectMarketArea("GB");
@@ -135,7 +168,6 @@ test("Market Data Extraction", async ({ page, context }) => {
 
 ## Notes
 
-- On first run, delete `auth.json` if it exists to force a fresh login and CAPTCHA solve
-- Run the tests in `--headed` mode for manual CAPTCHA solving
-- CSV files are timestamped so each run's data is saved separately
-- `SelectDeliveryDate` accepts a number offset from today — useful for extracting historical or future data
+- Delete `auth.json` to force a fresh login and CAPTCHA solve
+- `auth.json` and `Output/` are excluded from git via `.gitignore`
+- `SelectDeliveryDate` accepts a number offset — useful for extracting historical or future data

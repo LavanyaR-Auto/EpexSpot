@@ -170,7 +170,9 @@ export class HomePage {
 
         // Save data to CSV
         const csv = [headers, ...rows].join('\n');
-        fs.writeFileSync(`./test-results/market-data-${date}_${time}.csv`, csv, 'utf-8');
+        const dir = './Output';
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(`${dir}/market-data-${date}_${time}.csv`, csv, 'utf-8');
         console.log(`✓ CSV saved to market-data-${date}_${time}.csv`);
     }
 }
