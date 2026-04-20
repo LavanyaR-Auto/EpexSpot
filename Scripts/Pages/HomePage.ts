@@ -47,6 +47,7 @@ export class HomePage {
         this.TableHourItems = page.locator('.js-table-times ul li.no-children a');
     }
 
+    // Method to select trading modality filter
     async SelectTradingModality(modality: string) {
         switch (modality) {
             case "Auction":
@@ -67,6 +68,7 @@ export class HomePage {
         await this.page.waitForTimeout(shortwait);
     }
 
+    // Method to select delivery date
     async SelectDeliveryDate(daysToAdd: number) {
         const date = GetFormattedDate(daysToAdd);
         await this.DeliveryDate.click();
@@ -77,6 +79,7 @@ export class HomePage {
         await this.page.waitForTimeout(shortwait);
     }
 
+    // Method to select product filter
     async SelectProduct(product: string) {
         switch (product) {
             case "60min":
@@ -94,6 +97,7 @@ export class HomePage {
         await this.page.waitForTimeout(shortwait);
     }
 
+    // Method to select view filter
     async SelectView(view: string) {
         switch (view) {
             case "Map":
@@ -111,6 +115,7 @@ export class HomePage {
         await this.page.waitForTimeout(shortwait);
     }
 
+    // Method to select market area filter
     async SelectMarketArea(marketArea: string) {
         switch (marketArea) {
             case "BE":
@@ -135,7 +140,8 @@ export class HomePage {
         }
         await this.page.waitForTimeout(shortwait);
     }
-    
+
+    // Method to extract table data and save it to a CSV file
     async ExtractTableData() {
         //Capture hours
         const hourItems = this.TableHourItems;
