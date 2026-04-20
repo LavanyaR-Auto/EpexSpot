@@ -144,18 +144,15 @@ export class HomePage {
     }
 
     // Method to extract table data and save it to a CSV file
-    async ExtractTableData() {
-        //Capture hours
-        const hourItems = this.TableHourItems;
-        
-        //Cature data
+    async ExtractTableData() {        
+        //Cature number of rows to iterate through
         const dataRowsCount = await this.TableDataRows.count();
 
         // Extract hours and corresponding data into an array of objects
         const data = []; 
         for (let i = 0; i < dataRowsCount; i++) {
             const cells = this.TableDataRows.nth(i).locator('td');
-            const hour = await hourItems.nth(i).innerText();
+            const hour = await this.TableHourItems.nth(i).innerText();
             data.push({
                 hours: hour.trim(),
                 low: await cells.nth(0).innerText(),
