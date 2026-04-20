@@ -1,4 +1,4 @@
-# EPEX Spot 
+# EPEX Spot Market Data Scraper
 
 An automated data extraction framework built with **Playwright** and **TypeScript** that scrapes market data from [epexspot.com](https://www.epexspot.com/en/market-results) and exports it to CSV.
 
@@ -101,7 +101,7 @@ await homePage.SelectMarketArea("GB");
 **Delivery Date:** number offset from today — `0` = today, `1` = tomorrow, `-1` = yesterday
 
 ### 4. Data Extraction
-After filters are applied, all collapsible hour rows are expanded and the following columns are extracted:
+After filters are applied the following columns are extracted from the market results table:
 
 | Column | Description |
 |--------|-------------|
