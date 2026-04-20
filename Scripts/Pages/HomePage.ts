@@ -24,6 +24,7 @@ export class HomePage {
     readonly MarketAreaGB: Locator;
     readonly MarketAreaNL: Locator;
     readonly TableHourItems: Locator;
+    readonly TableDataRows: Locator;
 
     constructor(page: Page) {
         this.page = page;
@@ -45,6 +46,7 @@ export class HomePage {
         this.MarketAreaGB = page.locator('input[name="filters[market_area]"][value="GB"]');
         this.MarketAreaNL = page.locator('input[name="filters[market_area]"][value="NL"]');
         this.TableHourItems = page.locator('.js-table-times ul li.no-children a');
+        this.TableDataRows = page.locator('table tbody tr.lvl-1');
     }
 
     // Method to select trading modality filter
@@ -147,13 +149,12 @@ export class HomePage {
         const hourItems = this.TableHourItems;
         
         //Cature data
-        const dataRows = this.page.locator('table tbody tr.lvl-1')
-        const dataRowsCount = await dataRows.count();
+        const dataRowsCount = await this.TableDataRows.count();
 
         // Extract hours and corresponding data into an array of objects
         const data = []; 
         for (let i = 0; i < dataRowsCount; i++) {
-            const cells = dataRows.nth(i).locator('td');
+            const cells = this.TableDataRows.nth(i).locator('td');
             const hour = await hourItems.nth(i).innerText();
             data.push({
                 hours: hour.trim(),
